@@ -13,9 +13,22 @@ class FileProcessor {
     let wsJson = xlsx.utils.sheet_to_json(ws);
     return wsJson;
   }
-  static exec(supplierName) {
+  static formatErp() {
     let erp = this.getJson(this.getWs("erp.xlsx"));
-    const supplier = this.getJson(this.getWs(supplierName));
+    erp = erp.map((rec) => {
+      let code = /(\w\d{7})\w+/.exec(rec.description);
+
+      rec["supplier code"] = code ? code[0] : "";
+      return rec;
+    });
+    let erpWs = xlsx.utils.json_to_sheet(erp);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, erpWs, "erp-codes");
+    xlsx.writeFile(wb, "erp-codes.xlsx");
+  }
+  static dremel(filePath) {
+    let erp = this.getJson(this.getWs("erp.xlsx"));
+    const supplier = this.getJson(this.getWs(filePath));
     erp = erp.map((rec) => {
       let descriptionArr = rec.description.split(" ");
       let matchedSupplier = supplier.find((sup) => {
@@ -33,9 +46,19 @@ class FileProcessor {
           0.6 * matchedSupplier["__EMPTY_3"];
         let supplierCode =
           matchedSupplier["supplier code"] || matchedSupplier["__EMPTY"];
-        return { ...rec, ["supplier code"]: supplierCode, price };
+        return {
+          ...rec,
+          ["supplier code"]: supplierCode,
+          price,
+          ["EAN Code"]:
+            matchedSupplier["EAN Code"] || matchedSupplier["__EMPTY_1"],
+        };
       } else {
-        return rec;
+        let code = /[\w|\d]{10}|(\w\d{7})\w+/.exec(rec.description);
+        return {
+          ...rec,
+          ["supplier code"]: code ? code[0] : "",
+        };
       }
     });
     //creating a new ws from the result json
@@ -46,8 +69,11 @@ class FileProcessor {
     const resultsWb = xlsx.utils.book_new();
     // adding ws to wb
     xlsx.utils.book_append_sheet(resultsWb, resultsWs, "result");
+    //new filenme
+    const priceFileName = "priceLists/dremel/" + Date.now() + ".xlsx";
     //writing the wb to file
-    xlsx.writeFile(resultsWb, "dremel_pricelist.xlsx");
+    xlsx.writeFile(resultsWb, priceFileName);
+    return priceFileName;
   }
   static columnDetails() {
     let erpWs = this.getWs("erp.xlsx");
@@ -55,4 +81,4 @@ class FileProcessor {
   }
 }
 
-FileProcessor.exec("dremel.xlsm");
+module.exports = FileProcessor;

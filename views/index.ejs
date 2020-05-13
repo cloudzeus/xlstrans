@@ -2,10 +2,140 @@
 <html>
   <head>
     <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css" />
+    <link rel="stylesheet" href="/stylesheets/style.css" />
   </head>
   <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
+    <div class="container">
+      <div class="col-6">
+        <div
+          id="error"
+          class="alert alert-danger alert-dismissable"
+          style="display: none;"
+        ></div>
+        <h1 class="title text-center">Generate Price List</h1>
+        <form class="form">
+          <div class="form-group">
+            <label for="supplier">
+              Supplier
+            </label>
+            <input
+              name="supplier"
+              class="form-control"
+              id="supplier"
+              type="text"
+              placeholder="Please Enter The Supplier Name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="file">
+              Xls File
+              <div class="d-flex align-content-between">
+                <h4 class="btn btn-success mt-2 text-white">
+                  Upload
+                </h4>
+                <p
+                  id="uploadedFile"
+                  class="mt-3 ml-4"
+                  style="display: none;"
+                ></p>
+              </div>
+            </label>
+            <input name="file" id="file" class="d-none" id="file" type="file" />
+          </div>
+          <div class="form-group">
+            <input
+              name="submit"
+              id="submit"
+              class="btn btn-primary btn-lg btn-block"
+              type="submit"
+              value="submit"
+            />
+          </div>
+        </form>
+        <blockquote class="blockquote">
+          <strong>NODE:</strong> If the output file appears to be entirely
+          wrong, check if you've uploaded the correct Supplier File and try
+          again.
+        </blockquote>
+      </div>
+    </div>
   </body>
+  <script>
+    const fileInput = document.querySelector("#file");
+    const supplier = document.querySelector("#supplier");
+    const error = document.querySelector("#error");
+    const submit = document.querySelector("#submit");
+    function loading() {
+      if (submit.value == "submit") {
+        submit.value = "Loading....";
+        submit.disabled = true;
+      } else {
+        submit.value = "submit";
+        submit.disabled = false;
+      }
+    }
+    document.querySelector("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      error.style.display = "none";
+      const noError = fileInput.files[0] && supplier.value.trim().length > 0;
+      if (!noError) {
+        error.textContent = "Both supplier name and file are require";
+        return (error.style.display = "block");
+      }
+      const headers = new Headers();
+      // headers.set("Content-Type", "application/json");
+      let data = new FormData();
+      data.append("file", fileInput.files[0]);
+      loading();
+      fetch(`/${supplier.value}`, {
+        method: "POST",
+        body: data,
+      })
+        .then((res) => {
+          const reader = res.body.getReader();
+          return new ReadableStream({
+            start(controller) {
+              return pump();
+              function pump() {
+                return reader.read().then(({ done, value }) => {
+                  // When no more data needs to be consumed, close the stream
+                  if (done) {
+                    controller.close();
+                    return;
+                  }
+                  // Enqueue the next data chunk into our target stream
+                  controller.enqueue(value);
+                  return pump();
+                });
+              }
+            },
+          });
+        })
+        .then((stream) => new Response(stream))
+        .then((response) => response.blob())
+        .then((blob) => {
+          loading();
+          let url = window.URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = supplier.value + ".xlsx";
+          document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
+          a.click();
+          a.remove(); //afterwards we remove the element again
+        })
+        .catch((err) => {
+          loading();
+          console.log(err);
+          error.textContent = err.error;
+          error.style.display = "block";
+        });
+    });
+    fileInput.addEventListener("change", (e) => {
+      let filedisplay = document.getElementById("uploadedFile");
+      // console.log(e.target.files[0]);
+      filedisplay.textContent = e.target.files[0].name;
+      filedisplay.style.display = "block";
+    });
+  </script>
 </html>

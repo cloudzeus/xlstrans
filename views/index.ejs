@@ -17,31 +17,55 @@
         <form class="form">
           <div class="form-group">
             <label for="supplier">
-              Supplier
+              SUPPLIER NAME
             </label>
-            <input
+            <select
+              
               name="supplier"
               class="form-control"
               id="supplier"
               type="text"
               placeholder="Please Enter The Supplier Name"
-            />
+              >
+              <option name="dremel">Please select the supplier</dremel>
+              <option name="dremel" value="dremel">dremel</dremel>
+            </select>
           </div>
           <div class="form-group">
-            <label for="file">
-              Xls File
+            <label for="supplierFile">
+              SUPPLIER XLS File
               <div class="d-flex align-content-between">
                 <h4 class="btn btn-success mt-2 text-white">
                   Upload
                 </h4>
                 <p
-                  id="uploadedFile"
+                  id="supplierUploadedFile"
                   class="mt-3 ml-4"
                   style="display: none;"
                 ></p>
               </div>
             </label>
-            <input name="file" id="file" class="d-none" id="file" type="file" />
+
+            <hr class="bg-success" />
+            <input name="file" id="supplierFile" class="d-none" type="file" />
+          </div>
+          <div class="form-group">
+            <label for="erpFile">
+              ERP XLS FILE
+              <div class="d-flex align-content-between">
+                <h4 class="btn btn-success mt-2 text-white">
+                  Upload
+                </h4>
+                <p
+                  id="erpUploadedFile"
+                  class="mt-3 ml-4"
+                  style="display: none;"
+                ></p>
+              </div>
+            </label>
+
+            <hr class="bg-success" />
+            <input name="file" id="erpFile" class="d-none" type="file" />
           </div>
           <div class="form-group">
             <input
@@ -53,8 +77,8 @@
             />
           </div>
         </form>
-        <blockquote class="blockquote">
-          <strong>NODE:</strong> If the output file appears to be entirely
+        <blockquote class="blockquote border-left border-success pl-3 border-4">
+          <strong>NOTE:</strong> If the output file appears to be entirely
           wrong, check if you've uploaded the correct Supplier File and try
           again.
         </blockquote>
@@ -62,13 +86,14 @@
     </div>
   </body>
   <script>
-    const fileInput = document.querySelector("#file");
+    const supplierFileInput = document.querySelector("#supplierFile");
+    const erpFileInput = document.querySelector("#erpFile");
     const supplier = document.querySelector("#supplier");
     const error = document.querySelector("#error");
     const submit = document.querySelector("#submit");
     function loading() {
       if (submit.value == "submit") {
-        submit.value = "Loading....";
+        submit.value = "Processing, Might take a while...";
         submit.disabled = true;
       } else {
         submit.value = "submit";
@@ -78,21 +103,33 @@
     document.querySelector("form").addEventListener("submit", (e) => {
       e.preventDefault();
       error.style.display = "none";
-      const noError = fileInput.files[0] && supplier.value.trim().length > 0;
+      const noError =
+        supplierFileInput.files[0] &&
+        erpFileInput.files[0] &&
+        supplier.value.trim().length > 0;
       if (!noError) {
-        error.textContent = "Both supplier name and file are require";
+        error.textContent =
+          "All fields are required, make sure to fill them  all up.";
         return (error.style.display = "block");
       }
       const headers = new Headers();
       // headers.set("Content-Type", "application/json");
       let data = new FormData();
-      data.append("file", fileInput.files[0]);
+      let sup = supplierFileInput.files[0];
+      let erp = erpFileInput.files[0];
+      data.append(`${supplier.value}Supplier`, sup);
+      data.append(`${supplier.value}Erp`, erp);
       loading();
       fetch(`/${supplier.value}`, {
         method: "POST",
         body: data,
       })
         .then((res) => {
+          if (res.status !== 200) {
+            let error = new Error();
+            error.message = "Something went wrong!. Try Again";
+            throw error;
+          }
           const reader = res.body.getReader();
           return new ReadableStream({
             start(controller) {
@@ -119,7 +156,8 @@
           let url = window.URL.createObjectURL(blob);
           var a = document.createElement("a");
           a.href = url;
-          a.download = supplier.value + ".xlsx";
+          a.download =
+            supplier.value + `-${new Date().toLocaleString()}` + ".xlsx";
           document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
           a.click();
           a.remove(); //afterwards we remove the element again
@@ -127,15 +165,21 @@
         .catch((err) => {
           loading();
           console.log(err);
-          error.textContent = err.error;
+          error.textContent = err.message ? err.message : err.error;
           error.style.display = "block";
         });
     });
-    fileInput.addEventListener("change", (e) => {
-      let filedisplay = document.getElementById("uploadedFile");
+    supplierFileInput.addEventListener("change", (e) => {
+      let fileDisplay = document.getElementById("supplierUploadedFile");
       // console.log(e.target.files[0]);
-      filedisplay.textContent = e.target.files[0].name;
-      filedisplay.style.display = "block";
+      fileDisplay.textContent = e.target.files[0].name;
+      fileDisplay.style.display = "block";
+    });
+    erpFileInput.addEventListener("change", (e) => {
+      let fileDisplay = document.getElementById("erpUploadedFile");
+      // console.log(e.target.files[0]);
+      fileDisplay.textContent = e.target.files[0].name;
+      fileDisplay.style.display = "block";
     });
   </script>
 </html>

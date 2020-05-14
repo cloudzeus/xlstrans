@@ -13,7 +13,7 @@ class FileProcessor {
   static getJson(ws) {
     console.log("Reaching..");
     let wsJson = xlsx.utils.sheet_to_json(ws);
-    
+
     return wsJson;
   }
   static dremel(supplierFilePath, erpFilePath) {
@@ -22,9 +22,9 @@ class FileProcessor {
     console.log("Reaching...");
     const supplier = this.getJson(this.getWs(supplierFilePath));
     console.log("Reading json complete...");
-    erp = erp.map((rec,index) => {
-      if(index == 0) return {}
-      let descriptionArr = rec.__EMPTY.split(" ") || []
+    erp = erp.map((rec, index) => {
+      if (index == 0) return {};
+      let descriptionArr = rec.__EMPTY.split(" ") || [];
       // // console.log("Supplier",supplier )
       // console.log("descriptionArr ",descriptionArr )
       let matchedSupplier = supplier.find((sup) => {
@@ -32,37 +32,35 @@ class FileProcessor {
           // console.log("SUp", sup);
           // console.log("Code", sup["supplier codeς"]);
           // console.log("Word",word);
-          return sup["supplier codeς"] === word 
+          return sup["supplier codeς"] === word;
         });
         // console.log("SUPL",supl)
         return supl ? true : false;
       });
       // console.log("matchedSupplier",matchedSupplier);
-      
-        // console.log("Rec",rec)
-      if (matchedSupplier) {
 
+      // console.log("Rec",rec)
+      if (matchedSupplier) {
         // console.log("matched",matchedSupplier)
         let price =
-          0.6 * matchedSupplier["retail price"] ||
-          0.6 * matchedSupplier["__EMPTY_3"];
+          matchedSupplier["retail price"] || matchedSupplier["__EMPTY_3"];
         let supplierCode =
           matchedSupplier["supplier codeς"] || matchedSupplier["__EMPTY"];
         return {
-          "barcode":rec['Υπόλοιπα ανά ΑΧ'],
-          "description":rec.__EMPTY,
-          "price":price,
-          "supplier code":supplierCode,
-          "ean code": matchedSupplier["EAN Code"]
+          barcode: rec["Υπόλοιπα ανά ΑΧ"],
+          description: rec.__EMPTY,
+          price: price,
+          "supplier code": supplierCode,
+          "ean code": matchedSupplier["EAN Code"],
         };
       } else {
         let code = /[\w|\d]{10}|(\w\d{7})\w+/.exec(rec.__EMPTY);
         return {
-          "barcode":rec['Υπόλοιπα ανά ΑΧ'],
-          "description":rec.__EMPTY,
-          "price": rec.__EMPTY_1,
+          barcode: rec["Υπόλοιπα ανά ΑΧ"],
+          description: rec.__EMPTY,
+          price: rec.__EMPTY_1,
           "supplier code": code ? code[0] : "",
-          "ean code": rec["ean code"]
+          "ean code": rec["ean code"],
         };
         // console.log(rec)
       }
@@ -79,7 +77,7 @@ class FileProcessor {
     //new filenme
     const priceFileName =
       "priceLists/dremel/" +
-      `${new Date().toLocaleDateString().split("/").join("-")}` +
+      `${new Date().toLocaleDateString().split("/").join("-")}-${Date.now()}` +
       ".xlsx";
     //writing the wb to file
     xlsx.writeFile(resultsWb, priceFileName);

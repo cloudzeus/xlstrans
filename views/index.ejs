@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= title %></title>
+    <title> Kolleris | Xlstrans</title>
     <link rel="stylesheet" href="/stylesheets/bootstrap.min.css" />
     <link rel="stylesheet" href="/stylesheets/style.css" />
   </head>
   <body>
-    <div class="container">
-      <div class="col-6">
+    <div class="container mb-5">
+      <div class="col-md-13 col-sm-12 col-lg-8">
         <div
           id="error"
           class="alert alert-danger alert-dismissable"
           style="display: none;"
         ></div>
-        <h1 class="title text-center">Generate Price List</h1>
+        <h1 class="title text-center mt-5">Generate Price List</h1>
         <form class="form">
           <div class="form-group">
             <label for="supplier">
@@ -22,6 +22,7 @@
             <select
               
               name="supplier"
+              style="height: 50px;"
               class="form-control"
               id="supplier"
               type="text"
@@ -31,6 +32,27 @@
               <option name="dremel" value="dremel">dremel</dremel>
             </select>
           </div>
+
+          <div id="example file" class="my-4">
+            <h3>Required File format</h3>
+            <p class="card-subtitle">Please upload files with the shown format to get consistent results</p>
+            <p class="text-info"> Alway use ".xls" files only</p>
+             <div id="exampleFiles" class="row mt-3" style="display: none;">
+               <div class="col-12 mb-3">
+                 <h6>Supplier</h6>
+                 <hr class="bg-success">
+                 <img id="egSupplier" alt="supplier" src="/images/dremelSupplier.png" style="width: 100%;height: auto;" />
+               </div>
+               <div class="col-12">
+                <h6>Erp</h6>
+                <hr class="bg-success">
+                <img id="egErp" alt="supplier" src="/images/dremelErp.png" style="width: 100%;height: auto;" />
+               </div>
+             </div> 
+          </div>
+
+
+
           <div class="form-group">
             <label for="supplierFile">
               SUPPLIER XLS File
@@ -82,6 +104,23 @@
           wrong, check if you've uploaded the correct Supplier File and try
           again.
         </blockquote>
+        <hr class=" mt-5 bg-primary"/>
+        <h3 class="title">History</h3>
+        <p class="card-subtitle">Recently generated files</p>
+        <hr class="bg-primary"/>
+          <table class="table table-hover table-bordered">
+            <thead>
+              <tr>
+                <th >Supplier</th>
+                <th >Erp</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colSpan="2">Please select a supplier at the top to view its history</td>
+              </tr>
+            </tbody>
+          </table>
       </div>
     </div>
   </body>
@@ -90,6 +129,7 @@
     const erpFileInput = document.querySelector("#erpFile");
     const supplier = document.querySelector("#supplier");
     const error = document.querySelector("#error");
+    const tbody = document.querySelector("tbody");
     const submit = document.querySelector("#submit");
     function loading() {
       if (submit.value == "submit") {
@@ -174,6 +214,7 @@
       // console.log(e.target.files[0]);
       fileDisplay.textContent = e.target.files[0].name;
       fileDisplay.style.display = "block";
+      
     });
     erpFileInput.addEventListener("change", (e) => {
       let fileDisplay = document.getElementById("erpUploadedFile");
@@ -181,5 +222,53 @@
       fileDisplay.textContent = e.target.files[0].name;
       fileDisplay.style.display = "block";
     });
+supplier.addEventListener('change',e=> {
+  showExamples()
+  let supplier = e.target.value
+  //get supplier history
+  fetch(`/history/${supplier}`).then((res) => {
+    return res.json()
+  }).then( data => {
+    tbody.innerHTML = ``
+    // console.log(tbody)
+    
+    data.suppliers.map((sup,index) => {
+      let tr = document.createElement('tr')
+      let td = document.createElement('td')
+      let a = document.createElement('a')
+      a.href = `/history/download/${supplier}Supplier/${sup}`
+      a.innerText = sup
+      td.appendChild(a)
+      tr.appendChild(td)
+      td = document.createElement('td')
+      a = document.createElement('a')
+
+      a.href = `/history/download/${"priceLists-"+supplier}/${data.erps[index]}`
+      a.innerText = data.erps[index]
+      td.appendChild(a)
+      tr.appendChild(td)
+     tbody.appendChild(tr) 
+     
+    })
+  })
+  .catch((error) => {
+    console.log("error",error)
+    tbody.innerHTML = `<tr>
+      <td colSpan="2">Please select a supplier at top to view its history</td>
+      </tr>`
+
+  });
+})
+  function showExamples(){
+    const egContainer = document.querySelector("#exampleFiles")
+    const egSupplier= document.querySelector("#egSupplier")
+    const egErp= document.querySelector("#egErp")
+    egErp.src = `/images/${supplier.value}Erp.png`
+    egSupplier.src = `/images/${supplier.value}Supplier.png`
+    egContainer.style.display = 'block'
+  }
+
+
+
   </script>
 </html>

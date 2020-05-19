@@ -32,8 +32,10 @@ router.get("/history/:supplier", function (req, res) {
   if (!supplier)
     return res.status(404).send({ error: "suppier name is required" });
   try {
-    let suppliers = fs.readdirSync(`${supplier}Supplier/`);
-    let erps = fs.readdirSync(`priceLists/${supplier}/`);
+    let suppliers = fs.readdirSync(
+      path.join(__dirname, `${supplier}Supplier/`)
+    );
+    let erps = fs.readdirSync(path.join(__dirname, `priceLists/${supplier}/`));
     return res.send({ suppliers, erps });
   } catch (error) {
     console.log(error);

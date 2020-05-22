@@ -170,9 +170,60 @@ class FileProcessor {
     console.log("writing file complete");
     return priceFileName;
   }
-  static columnDetails() {
-    let erpWs = this.getWs("erp.xlsx");
-    console.log(erpWs["!cols"]);
+  static facom(supplierFilePath, erpFilePath) {
+    let erp = this.getJson(this.getWs(erpFilePath));
+    const supplier = this.getJson(this.getWs(supplierFilePath));
+    erp = erp.map((rec, index) => {
+      if (index == 0) return {};
+      let matchedSupplier = supplier.find((sup) => {
+        let erpSupCode = rec.__EMPTY_2;
+        if (erpSupCode.length > 0) return sup["supplier code"] === erpSupCode;
+        // console.log('sup["ean code and barcode"]', sup["ean code and barcode"]);
+        console.log("rec.__EMPTY_4", rec.__EMPTY_4);
+        console.log(
+          "rec.__EMPTY_4",
+          rec.__EMPTY_4 === sup["ean code and barcode"]
+        );
+        return rec.__EMPTY_4 === sup["ean code and barcode"];
+      });
+      if (matchedSupplier) {
+        return {
+          "erp code": rec["Υπόλοιπα ανά ΑΧ"],
+          description: rec.__EMPTY,
+          price: matchedSupplier["European Listprice"],
+          "supplier code": matchedSupplier["supplier code"],
+          "ean code": matchedSupplier["EAN Code"],
+          barcode: matchedSupplier["ean code and barcode"],
+        };
+      } else {
+        return {
+          "erp code": rec["Υπόλοιπα ανά ΑΧ"],
+          description: rec.__EMPTY,
+          price: "",
+          "supplier code": rec.__EMPTY_2,
+          "ean code": "",
+          barcode: rec.__EMPTY_5,
+        };
+      }
+    });
+    console.log("Updating complete");
+    //creating a new ws from the result json
+    const resultsWs = xlsx.utils.json_to_sheet(erp);
+    // resultsWs["!margins"] = this.getWs("erp.xlsx")["!margins"];
+    // resultsWs["!formatRows"] = false;
+    //creating a new wb
+    const resultsWb = xlsx.utils.book_new();
+    // adding ws to wb
+    xlsx.utils.book_append_sheet(resultsWb, resultsWs, "result");
+    //new filenme
+    const priceFileName =
+      "priceLists/facom/" +
+      `${new Date().toLocaleDateString().split("/").join("-")}-${Date.now()}` +
+      ".xlsx";
+    //writing the wb to file
+    xlsx.writeFile(resultsWb, priceFileName);
+    console.log("writing file complete");
+    return priceFileName;
   }
 }
 

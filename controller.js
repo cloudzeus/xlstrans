@@ -176,42 +176,34 @@ class FileProcessor {
     erp = erp.map((rec, index) => {
       if (index == 0) return {};
       let matchedSupplier = supplier.find((sup) => {
-        let erpSupCode = rec.__EMPTY_2;
-        if (erpSupCode.length > 0) return sup["supplier code"] === erpSupCode;
+        let erpSupCode = rec["supplier code"];
+        return sup.__EMPTY_2 === erpSupCode;
         // console.log('sup["ean code and barcode"]', sup["ean code and barcode"]);
-        console.log("rec.__EMPTY_4", rec.__EMPTY_4);
-        console.log(
-          "rec.__EMPTY_4",
-          rec.__EMPTY_4 === sup["ean code and barcode"]
-        );
-        return rec.__EMPTY_4 === sup["ean code and barcode"];
+        // console.log("rec.__EMPTY_4", rec.__EMPTY_4);
+        // console.log(
+        //   "rec.__EMPTY_4",
+        //   rec.__EMPTY_4 === sup["ean code and barcode"]
+        // );
+        // return rec.__EMPTY_4 === sup["ean code and barcode"];
       });
       if (matchedSupplier) {
         return {
-          "erp code": rec["Υπόλοιπα ανά ΑΧ"],
-          description: rec.__EMPTY,
-          price: matchedSupplier["European Listprice"],
-          "supplier code": matchedSupplier["supplier code"],
-          "ean code": matchedSupplier["EAN Code"],
-          barcode: matchedSupplier["ean code and barcode"],
-        };
-      } else {
-        return {
-          "erp code": rec["Υπόλοιπα ανά ΑΧ"],
-          description: rec.__EMPTY,
-          price: "",
-          "supplier code": rec.__EMPTY_2,
-          "ean code": "",
-          barcode: rec.__EMPTY_5,
+          "erp code": matchedSupplier.__EMPTY_1,
+          description: matchedSupplier.__EMPTY_4,
+          price: matchedSupplier.__EMPTY_3,
+          "supplier code": matchedSupplier.__EMPTY_2,
+          intrastat: matchedSupplier.__EMPTY_5,
         };
       }
+      return {};
     });
-    console.log("Updating complete");
+    erp = erp.filter((obj) => Object.keys(obj).length > 0);
+    console.log("Updating complete", typeof erp);
     //creating a new ws from the result json
     const resultsWs = xlsx.utils.json_to_sheet(erp);
-    // resultsWs["!margins"] = this.getWs("erp.xlsx")["!margins"];
-    // resultsWs["!formatRows"] = false;
-    //creating a new wb
+
+    console.log("reaching ");
+
     const resultsWb = xlsx.utils.book_new();
     // adding ws to wb
     xlsx.utils.book_append_sheet(resultsWb, resultsWs, "result");

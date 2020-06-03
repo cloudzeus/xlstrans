@@ -21,7 +21,25 @@ class FileProcessor {
   static joinWsJson(wsArray) {
     let result = [];
     wsArray.map((ws) => {
-      result = result.concat(this.getJson(ws));
+      // result = result.concat(this.getJson(ws));
+
+      //Checking is the item is in the result already, if so, update it's price wit the highest between the 2
+      //otherwise just push the object to the results array
+      this.getJson(ws).forEach((rec) => {
+        const exists = result.find((x) => rec.__EMPTY_2 === x.__EMPTY_2);
+        rec;
+        if (exists) {
+          const index = result.findIndex(
+            (obj) => obj.__EMPTY_2 === exists.__EMPTY_2
+          );
+          result[index].price =
+            exists.price > result[index].price
+              ? exists.price
+              : result[index].price;
+        } else {
+          result.push(rec);
+        }
+      });
     });
     return result;
   }
@@ -173,6 +191,7 @@ class FileProcessor {
   static facom(supplierFilePath, erpFilePath) {
     let erp = this.getJson(this.getWs(erpFilePath));
     const supplier = this.getJson(this.getWs(supplierFilePath));
+
     erp = erp.map((rec, index) => {
       if (index == 0) return {};
       let matchedSupplier = supplier.find((sup) => {
@@ -188,17 +207,18 @@ class FileProcessor {
       });
       if (matchedSupplier) {
         return {
-          "erp code": matchedSupplier.__EMPTY_1,
-          description: matchedSupplier.__EMPTY_4,
+          "erp code": rec["erp code"],
+          description: rec["erp description"],
           price: matchedSupplier.__EMPTY_3,
           "supplier code": matchedSupplier.__EMPTY_2,
+          barcode: matchedSupplier.__EMPTY_1,
           intrastat: matchedSupplier.__EMPTY_5,
         };
       }
       return {};
     });
     erp = erp.filter((obj) => Object.keys(obj).length > 0);
-    console.log("Updating complete", typeof erp);
+    // console.log("Updating complete", erp);
     //creating a new ws from the result json
     const resultsWs = xlsx.utils.json_to_sheet(erp);
 

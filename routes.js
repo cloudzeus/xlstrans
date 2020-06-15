@@ -36,7 +36,8 @@ router.get("/history/:supplier", function (req, res) {
       path.join(__dirname, `${supplier}Supplier/`)
     );
     let erps = fs.readdirSync(path.join(__dirname, `priceLists/${supplier}/`));
-    return res.send({ suppliers, erps });
+    let oldErps = fs.readdirSync(path.join(__dirname, `${supplier}Erp/`));
+    return res.send({ suppliers, erps, oldErps });
   } catch (error) {
     console.log(error);
     return res.sendStatus(404);

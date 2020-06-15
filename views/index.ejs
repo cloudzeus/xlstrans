@@ -124,12 +124,13 @@
           <thead>
             <tr>
               <th>Supplier</th>
-              <th>Erp</th>
+              <th>Output Erp</th>
+              <th>input Erp</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td colSpan="2">
+              <td colSpan="3">
                 Please select a supplier at the top to view its history
               </td>
             </tr>
@@ -264,13 +265,20 @@
             a.innerText = data.erps[index];
             td.appendChild(a);
             tr.appendChild(td);
+            td = document.createElement("td");
+            a = document.createElement("a");
+
+            a.href = `/history/download/${supplier}Erp/${data.oldErps[index]}`;
+            a.innerText = data.oldErps[index];
+            td.appendChild(a);
+            tr.appendChild(td);
             tbody.appendChild(tr);
           });
         })
         .catch((error) => {
           console.log("error", error);
           tbody.innerHTML = `<tr>
-      <td colSpan="2">Please select a supplier at top to view its history</td>
+      <td colSpan="3">Please select a supplier at top to view its history</td>
       </tr>`;
         });
     });

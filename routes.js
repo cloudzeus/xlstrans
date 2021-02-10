@@ -13,8 +13,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     cb(
       null,
-      `${new Date().toLocaleDateString().split("/").join("-")}-${Date.now()}.${
-        file.originalname.split(".")[file.originalname.split(".").length - 1]
+      `${new Date().toLocaleDateString().split("/").join("-")}-${Date.now()}.${file.originalname.split(".")[file.originalname.split(".").length - 1]
       }`
     );
   },
@@ -39,8 +38,15 @@ router.get("/history/:supplier", function (req, res) {
     let oldErps = fs.readdirSync(path.join(__dirname, `${supplier}Erp/`));
     return res.send({ suppliers, erps, oldErps });
   } catch (error) {
+    fs.mkdirSync(
+      path.join(__dirname, `${supplier}Supplier/`)
+
+    )
+    const suppliers = [];
+    const erps = [];
+    const oldErps = [];
     console.log(error);
-    return res.sendStatus(404);
+    return res.send({ suppliers, erps, oldErps });
   }
 });
 
@@ -70,13 +76,13 @@ router.post("/:supplier", upload.any(), (req, res) => {
     return res
       .status(400)
       .send({ error: "Both ERP and Supplier files are required!" });
-  const supplier = req.params.supplier;
-  if (!supplier)
-    return res.status(400).send({ error: "Supplier name required " });
-  const supplierExists = typeof controller[supplier] !== "undefined";
-  if (!supplierExists)
-    return res.status(404).send({ error: "supplier not found" });
-  const filePath = controller[supplier](supplierFile.path, erpFile.path);
+  // const supplier = req.params.supplier;
+  // if (!supplier)
+  //   return res.status(400).send({ error: "Supplier name required " });
+  // const supplierExists = typeof controller[supplier] !== "undefined";
+  // if (!supplierExists)
+  //   return res.status(404).send({ error: "supplier not found" });
+  const filePath = controller.generateFile(supplierFile.path, erpFile.path);
   res.sendFile(path.join(__dirname, filePath));
 });
 

@@ -286,8 +286,10 @@
       const egContainer = document.querySelector("#exampleFiles");
       const egSupplier = document.querySelector("#egSupplier");
       const egErp = document.querySelector("#egErp");
-      egErp.src = `/images/${supplier.value}Erp.png`;
-      egSupplier.src = `/images/${supplier.value}Supplier.png`;
+
+      //!changes to only support one formt
+      egErp.src = `/images/boschErp.png`;
+      egSupplier.src = `/images/boschSupplier.png`;
       egContainer.style.display = "block";
     }
   </script>

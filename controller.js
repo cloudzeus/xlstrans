@@ -135,7 +135,7 @@ class FileProcessor {
       if (index == 0) return {};
       // let supplierCodeFromDescription = supplierCodeRegex.exec(rec.__EMPTY_1)
       let matchedSupplier = supplier.find((sup) => {
-        const matched = rec.__EMPTY_3 == sup['supplier code']
+        const matched = rec.__EMPTY_3 == sup['supplier code'] || rec['supplier code'] == sup['supplier code']
         return matched
       });
 
@@ -143,12 +143,12 @@ class FileProcessor {
 
 
       const defaultRecord = {
-        'erp code': rec.__EMPTY,
-        description: rec.__EMPTY_1,
-        supplier: supplierName,
-        "supplier code": rec.__EMPTY_3,
-        "ean code": rec.__EMPTY_4,
-        price: rec.__EMPTY_5,
+        'erp code': rec['erp code'] || rec.__EMPTY,
+        description: rec.description || rec.__EMPTY_1,
+        supplier: rec.supplier || supplierName,
+        "supplier code": rec['supplier code'] || rec.__EMPTY_3,
+        "ean code": rec['ean code'] || rec.__EMPTY_4,
+        price: rec.price || rec.__EMPTY_5,
       };
 
       // console.log("Rec",rec)
@@ -156,9 +156,6 @@ class FileProcessor {
         // console.log("matched", matchedSupplier);
         return {
           ...defaultRecord,
-          'erp code': rec.__EMPTY,
-          description: rec.__EMPTY_1,
-          supplier: supplierName,
           price: matchedSupplier.price,
           "supplier code": matchedSupplier["supplier code"],
           "ean code":

@@ -1,8 +1,12 @@
-// const path = require("path");
+const path = require("path");
 // const fs = require("fs");
 const xlsx = require("xlsx");
 // const _ = require("lodash");
 class FileProcessor {
+  constructor() {
+
+    this.globalErpFormat = path.join(__dirname, 'globalErpFormat.xlsx');
+  }
   static getWs(fileName) {
     let workBook = xlsx.readFile(fileName, { cellDates: true });
     // console.log("workBook", workBook);
@@ -120,70 +124,59 @@ class FileProcessor {
     console.log("writing file complete");
     return priceFileName;
   }
-  static generateFile(supplierFilePath, erpFilePath) {
-    const supplierWs = FileProcessor.getAllWs(supplierFilePath);
-    let supplier = this.joinWsJson(supplierWs);
+  static generateFile(supplierFilePath, erpFilePath, supplierName) {
+    const supplier = this.getJson(this.getWs(supplierFilePath));
     let erp = this.getJson(this.getWs(erpFilePath));
-    console.log("Reaching");
+
+
+    // let supplierCodeRegex = /[\w|\d]{10}|(\w\d{7})\w+|\d{3,}\W\d+|[\w+|\d+|\\,|\\.|\w+|\d+]{6,}/
+
     erp = erp.map((rec, index) => {
       if (index == 0) return {};
-      let descriptionArr = rec.__EMPTY.split(" ") || [];
-      // // console.log("Supplier",supplier )
-      // console.log("descriptionArr ",descriptionArr )
+      // let supplierCodeFromDescription = supplierCodeRegex.exec(rec.__EMPTY_1)
       let matchedSupplier = supplier.find((sup) => {
-        let supl = descriptionArr.find((word) => {
-          // console.log("SUp", sup);
-          // console.log("Code", sup["supplier codeς"]);
-          // console.log("Word",word);
-          return sup["supplier code"] === word;
-        });
-        // console.log("SUPL",supl)
-        return supl ? true : false;
+        const matched = rec.__EMPTY_3 == sup['supplier code']
+        return matched
       });
-      // console.log("matchedSupplier",matchedSupplier);
+
+      // let defaultSupplierCode = /[\w|\d]{10}|(\w\d{7})\w+|\d{3,}\W\d+/.exec(rec.__EMPTY_1);
+
+
+      const defaultRecord = {
+        'erp code': rec.__EMPTY,
+        description: rec.__EMPTY_1,
+        supplier: supplierName,
+        "supplier code": rec.__EMPTY_3,
+        "ean code": rec.__EMPTY_4,
+        price: rec.__EMPTY_5,
+      };
 
       // console.log("Rec",rec)
       if (matchedSupplier) {
         // console.log("matched", matchedSupplier);
-        let price = matchedSupplier.price;
-        let supplierCode = matchedSupplier["supplier code"];
         return {
-          barcode: rec["Υπόλοιπα ανά ΑΧ"],
-          description: rec.__EMPTY,
-          supplier: "BOSCH",
-          price: price,
-          "supplier code": supplierCode,
+          ...defaultRecord,
+          'erp code': rec.__EMPTY,
+          description: rec.__EMPTY_1,
+          supplier: supplierName,
+          price: matchedSupplier.price,
+          "supplier code": matchedSupplier["supplier code"],
           "ean code":
-            matchedSupplier["EAN Code"] ||
-            matchedSupplier["EAN Code 3165140…"] ||
             matchedSupplier["ean code"],
         };
       } else {
-        let code = /[\w|\d]{10}|(\w\d{7})\w+|\d{3,}\W\d+/.exec(rec.__EMPTY);
-        // console.log("rec", rec);
-        return {
-          barcode: rec["Υπόλοιπα ανά ΑΧ"],
-          description: rec.__EMPTY,
-          supplier: "BOSCH",
-          price: rec.__EMPTY_5,
-          "supplier code": code ? code[0] : "",
-          "ean code": rec["ean code"] || rec["EAN-14"],
-        };
-        // console.log(rec)
+        return defaultRecord
       }
     });
     console.log("Updating complete");
     //creating a new ws from the result json
     const resultsWs = xlsx.utils.json_to_sheet(erp);
-    // resultsWs["!margins"] = this.getWs("erp.xlsx")["!margins"];
-    // resultsWs["!formatRows"] = false;
-    //creating a new wb
     const resultsWb = xlsx.utils.book_new();
     // adding ws to wb
     xlsx.utils.book_append_sheet(resultsWb, resultsWs, "result");
     //new filenme
     const priceFileName =
-      "priceLists/bosch/" +
+      `priceLists/${supplierName}/` +
       `${new Date().toLocaleDateString().split("/").join("-")}-${Date.now()}` +
       ".xlsx";
     //writing the wb to file
@@ -229,12 +222,12 @@ class FileProcessor {
           "ean code": matchedSupplier["EAN Code"],
         };
       } else {
-        let code = /[\w|\d]{10}|(\w\d{7})\w+/.exec(rec.__EMPTY);
+        let supplierCodeRegex = /[\w|\d]{10}|(\w\d{7})\w+|\d{3,}\W\d+|[\w+|\d+|\\,|\\.|\w+|\d+]{6,}/
         return {
           barcode: rec["Υπόλοιπα ανά ΑΧ"],
           description: rec.__EMPTY,
           price: rec.__EMPTY_1,
-          "supplier code": code ? code[0] : "",
+          "supplier code": rec.__EMPTY ? rec.__EMPTY.split(" ").find(w => supplierCodeRegex.test(w)) : "",
           "ean code": rec["ean code"],
         };
         // console.log(rec)

@@ -82,7 +82,7 @@ router.post("/:supplier", upload.any(), (req, res) => {
   // const supplierExists = typeof controller[supplier] !== "undefined";
   // if (!supplierExists)
   //   return res.status(404).send({ error: "supplier not found" });
-  const filePath = controller.generateFile(supplierFile.path, erpFile.path);
+  const filePath = controller.generateFile(supplierFile.path, erpFile.path, req.params.supplier);
   res.sendFile(path.join(__dirname, filePath));
 });
 
